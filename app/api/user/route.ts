@@ -9,22 +9,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid user data" }, { status: 400 });
     }
 
+    // 1. Convert to BigInt for the Prisma query
+    const tid = BigInt(userData.id);
+
     let user = await prisma.user.findUnique({
-      where: { telegramId: userData.id },
+      where: { telegramId: tid },
     });
 
     if (!user) {
       user = await prisma.user.create({
         data: {
-          telegramId: userData.id,
-          name: userData.username || "",
-          //firstName: userData.first_name || "",
-          //lastName: userData.last_name || "",
+          telegramId: tid,
+          name: userData.username || userData.first_name || "Unknown",
         },
       });
     }
 
-    return NextResponse.json(user);
+    // 2. IMPORTANT: Convert BigInt to String/Number before returning JSON
+    // Otherwise, JSON.stringify will fail.
+    const safeUser = {
+      ...user,
+      telegramId: user.telegramId.toString(),
+    };
+
+    return NextResponse.json(safeUser);
   } catch (error) {
     console.error("Error processing user data:", error);
     return NextResponse.json(

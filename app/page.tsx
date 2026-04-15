@@ -66,12 +66,6 @@ const Index = () => {
 
   return (
     <main className="min-h-screen">
-      {/* Visual cue that we are verifying the user in the background */}
-      {loading && (
-        <div className="fixed bottom-4 right-4 animate-pulse text-xs text-gray-400">
-          Verifying Session...
-        </div>
-      )}
       <ReportPage user={user} />
     </main>
   );

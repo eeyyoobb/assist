@@ -80,8 +80,8 @@ const ReportPage = ({ user }: { user: User }) => {
         },
         body: JSON.stringify({
           ...form,
-          userId: "current-user-id", // replace with auth user later
-          userName: "Current User",
+          userId: user.id, // replace with auth user later
+          userName: user.first_name,
         }),
       });
 

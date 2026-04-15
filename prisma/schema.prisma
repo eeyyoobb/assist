@@ -18,7 +18,7 @@ model Report {
   company    String
   staffRole  StaffRole
   reportType ReportType
-  userId     String     @db.ObjectId
+  userId     String
   userName   String
 
   // Relations

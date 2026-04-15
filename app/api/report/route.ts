@@ -1,78 +1,70 @@
-import { PrismaClient } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma"; // Use the singleton!
 
-const prisma = new PrismaClient();
-
-// POST: Create Report
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-
     const {
       company,
       staffRole,
       reportType,
-      userId,
+      userId, // This is the MongoDB _id from the user object
       userName,
       socialMedia,
       officeActivity,
     } = body;
 
-    // Basic validation
-    if (!company || !staffRole || !reportType || !userId || !userName) {
+    if (!company || !staffRole || !reportType || !userId) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 },
       );
     }
 
-    const data: any = {
-      company,
-      staffRole,
-      reportType,
-      userId,
-      userName,
-    };
-
-    // Conditional creation
-    if (reportType === "social_media" && socialMedia) {
-      data.socialMedia = {
-        create: {
-          mediaName: socialMedia.mediaName,
-          totalPost: socialMedia.totalPost,
-          totalView: socialMedia.totalView,
-          totalEngagement: socialMedia.totalEngagement,
-          followers: socialMedia.followers,
-        },
-      };
-    }
-
-    if (reportType === "office_activity" && officeActivity) {
-      data.officeActivity = {
-        create: {
-          task: officeActivity.task,
-          consulting: {
-            create: officeActivity.consulting || [],
-          },
-        },
-      };
-    }
-
+    // IMPORTANT: MongoDB needs to know this is an ObjectId relationship
     const report = await prisma.report.create({
-      data,
-      include: {
-        socialMedia: true,
-        officeActivity: {
-          include: {
-            consulting: true,
-          },
-        },
+      data: {
+        company,
+        staffRole,
+        reportType,
+        userId, // The MongoDB ID string
+        userName,
+        // Using optional chaining to handle nested creation
+        ...(reportType === "social_media" && socialMedia
+          ? {
+              socialMedia: {
+                create: {
+                  mediaName: socialMedia.mediaName,
+                  totalPost: Number(socialMedia.totalPost),
+                  totalView: Number(socialMedia.totalView),
+                  totalEngagement: Number(socialMedia.totalEngagement),
+                  followers: Number(socialMedia.followers),
+                },
+              },
+            }
+          : {}),
+        ...(reportType === "office_activity" && officeActivity
+          ? {
+              officeActivity: {
+                create: {
+                  task: officeActivity.task,
+                  consulting: {
+                    create:
+                      officeActivity.consulting?.map((c: any) => ({
+                        name: c.name,
+                        phoneNumber: c.phoneNumber,
+                      })) || [],
+                  },
+                },
+              },
+            }
+          : {}),
       },
     });
 
     return NextResponse.json(report, { status: 201 });
   } catch (error) {
-    console.error(error);
+    console.error("Report Creation Error:", error);
     return NextResponse.json(
       { error: "Failed to create report" },
       { status: 500 },

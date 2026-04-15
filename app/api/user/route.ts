@@ -1,28 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma"; // Use the singleton!
 import { StaffRole } from "@prisma/client";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
   try {
-    const userData = await req.json();
+    const body = await req.json();
+    // Telegram sends initData. If you are passing the raw object:
+    const telegramId = String(body.id || body.telegramId);
 
-    if (!userData || !userData.id) {
+    if (!telegramId) {
       return NextResponse.json({ error: "Invalid user data" }, { status: 400 });
     }
 
     let user = await prisma.user.findUnique({
-      where: { telegramId: userData.id },
+      where: { telegramId: telegramId },
     });
 
     if (!user) {
       user = await prisma.user.create({
         data: {
-          telegramId: userData.id,
-          name: userData.first_name || "",
-          company: "Pending", // Must match your schema requirement
-          role: StaffRole.guest, // Must match your schema requirement
+          telegramId: telegramId,
+          name: body.first_name || "Guest",
+          company: "Pending",
+          role: StaffRole.sales,
         },
       });
     }

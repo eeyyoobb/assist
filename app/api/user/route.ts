@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { StaffRole } from "../../../generated/prisma/client";
+import { StaffRole } from "@prisma/client";
 
 export async function POST(req: NextRequest) {
   try {

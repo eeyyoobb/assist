@@ -18,9 +18,10 @@ model Report {
   company    String
   staffRole  StaffRole
   reportType ReportType
-  userId     String
+  userId     String     @db.ObjectId
   userName   String
 
+  // Relations
   socialMedia    SocialMediaReport?
   officeActivity OfficeActivityReport?
 
@@ -36,7 +37,11 @@ model SocialMediaReport {
   followers       Int
 
   report   Report @relation(fields: [reportId], references: [id])
-  reportId String @unique
+  reportId String @unique @db.ObjectId
+
+  // Relates back to the users involved in this report
+  users   User[]   @relation(fields: [userIDs], references: [id])
+  userIDs String[] @db.ObjectId
 }
 
 model OfficeActivityReport {
@@ -44,9 +49,13 @@ model OfficeActivityReport {
   task Task
 
   report   Report @relation(fields: [reportId], references: [id])
-  reportId String @unique
+  reportId String @unique @db.ObjectId
 
   consulting ConsultingEntry[]
+
+  // Relates back to the users involved
+  users   User[]   @relation(fields: [userIDs], references: [id])
+  userIDs String[] @db.ObjectId
 }
 
 model ConsultingEntry {
@@ -55,12 +64,35 @@ model ConsultingEntry {
   phoneNumber String
 
   officeActivity   OfficeActivityReport @relation(fields: [officeActivityId], references: [id])
-  officeActivityId String
+  officeActivityId String               @db.ObjectId
 }
 
+model User {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  telegramId String    @unique
+  name       String
+  company    String
+  role       StaffRole
+
+  createdAt DateTime @default(now())
+
+  // MongoDB Many-to-Many requires fields on both sides
+  socialMediaReports   SocialMediaReport[] @relation(fields: [socialMediaReportIds], references: [id])
+  socialMediaReportIds String[]            @db.ObjectId
+
+  officeActivityReports   OfficeActivityReport[] @relation(fields: [officeActivityReportIds], references: [id])
+  officeActivityReportIds String[]               @db.ObjectId
+}
+
+// Enums remain the same
 enum StaffRole {
   media_manager
   sales
+  assistant_manager
+  manager
+  admin
+  auditor
+  guest
 }
 
 enum ReportType {

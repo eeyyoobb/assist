@@ -26,55 +26,42 @@ export const GUEST_USER: User = {
 
 const Index = () => {
   // 1. Initialize User synchronously (Fixes the first error)
-  const [user, setUser] = useState<User>(() => {
-    if (
-      typeof window !== "undefined" &&
-      window.Telegram?.WebApp?.initDataUnsafe?.user
-    ) {
-      const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-      return {
-        id: String(tgUser.id),
-        first_name: tgUser.first_name,
-        username: tgUser.username,
-      };
-    }
-    return GUEST_USER;
-  });
-
-  // 2. Initialize Loading synchronously (Fixes the current error)
-  // We only set loading to 'true' if we are actually in Telegram and have data to verify.
-  const [loading, setLoading] = useState(() => {
-    if (typeof window !== "undefined" && window.Telegram?.WebApp?.initData) {
-      return true;
-    }
-    return false;
-  });
+  const [user, setUser] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const tg = window.Telegram?.WebApp;
-
-    if (tg) {
+    if (typeof window !== "undefined" && window.Telegram?.WebApp) {
+      const tg = window.Telegram.WebApp;
       tg.ready();
-      tg.expand();
 
-      // 3. Only fetch if we have data. If we don't, loading is already false.
-      if (tg.initData) {
+      const initData = tg.initData || "";
+      const initDataUnsafe = tg.initDataUnsafe || {};
+
+      if (initDataUnsafe.user) {
         fetch("/api/user", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ initData: tg.initData }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(initDataUnsafe.user),
         })
           .then((res) => res.json())
           .then((data) => {
-            if (data && !data.error) setUser(data);
+            if (data.error) {
+              setError(data.error);
+            } else {
+              setUser(data);
+            }
           })
-          .catch((err) => console.error("Auth sync failed:", err))
-          .finally(() => {
-            setLoading(false); // This is now safe because it's inside an async callback
+          .catch((err) => {
+            setError("Failed to fetch user data");
           });
+      } else {
+        setError("No user data available");
       }
+    } else {
+      setError("This app should be opened in Telegram");
     }
-    // No 'else { setLoading(false) }' needed here anymore!
   }, []);
 
   return (

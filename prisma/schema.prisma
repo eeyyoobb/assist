@@ -68,11 +68,11 @@ model ConsultingEntry {
 }
 
 model User {
-  id         String    @id @default(auto()) @map("_id") @db.ObjectId
-  telegramId String    @unique
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  telegramId String     @unique
   name       String
-  company    String
-  role       StaffRole
+  company    String?
+  role       StaffRole?
 
   createdAt DateTime @default(now())
 

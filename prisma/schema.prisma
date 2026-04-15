@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Report {
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  company    String
+  staffRole  StaffRole
+  reportType ReportType
+  userId     String
+  userName   String
+
+  socialMedia    SocialMediaReport?
+  officeActivity OfficeActivityReport?
+
+  createdAt DateTime @default(now())
+}
+
+model SocialMediaReport {
+  id              String @id @default(auto()) @map("_id") @db.ObjectId
+  mediaName       String
+  totalPost       Int
+  totalView       Int
+  totalEngagement Int
+  followers       Int
+
+  report   Report @relation(fields: [reportId], references: [id])
+  reportId String @unique
+}
+
+model OfficeActivityReport {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  task Task
+
+  report   Report @relation(fields: [reportId], references: [id])
+  reportId String @unique
+
+  consulting ConsultingEntry[]
+}
+
+model ConsultingEntry {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  phoneNumber String
+
+  officeActivity   OfficeActivityReport @relation(fields: [officeActivityId], references: [id])
+  officeActivityId String
+}
+
+enum StaffRole {
+  media_manager
+  sales
+}
+
+enum ReportType {
+  social_media
+  office_activity
+}
+
+enum Task {
+  equb
+  key
+}

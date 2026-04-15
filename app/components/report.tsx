@@ -20,7 +20,6 @@ import {
 } from "../types";
 import SocialMediaFields from "./report/media";
 import OfficeActivityFields from "./report/office";
-import { User } from "../page";
 
 const defaultSocialMedia: SocialMediaReport = {
   mediaName: "",
@@ -35,7 +34,7 @@ const defaultOfficeActivity: OfficeActivityReport = {
   consulting: [],
 };
 
-const ReportPage = ({ user }: { user: User }) => {
+const ReportPage = ({ user }: { user: any }) => {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<ReportFormData>({
     company: "",
